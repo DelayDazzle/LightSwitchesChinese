@@ -9,7 +9,7 @@ namespace LightSwitchesChinese
     public class ModEntry : Mod
     {
         internal static ModEntry Instance;
-        internal static IMonitor Monitor;
+        internal static IMonitor ModMonitor;
 
         private Harmony harmony;
 

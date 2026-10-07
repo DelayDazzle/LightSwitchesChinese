@@ -18,10 +18,9 @@ jobs:
 
     - name: Prepare mod folder
       run: |
-        mkdir -p LightSwitchesChinese/i18n
+        mkdir -p LightSwitchesChinese
         cp manifest.json LightSwitchesChinese/
         cp bin/Release/net9.0/LightSwitchesChinese.dll LightSwitchesChinese/
-        cp i18n/zh.json LightSwitchesChinese/i18n/
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4

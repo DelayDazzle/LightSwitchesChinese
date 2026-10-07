@@ -5,19 +5,14 @@
     <RootNamespace>LightSwitchesChinese</RootNamespace>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
-    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="ModEntry.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="0Harmony">
-      <HintPath>0Harmony.dll</HintPath>
-    </Reference>
     <Reference Include="StardewModdingAPI">
       <HintPath>StardewModdingAPI.dll</HintPath>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>0Harmony.dll</HintPath>
     </Reference>
     <Reference Include="SMAPI.Toolkit.CoreInterfaces">
       <HintPath>SMAPI.Toolkit.CoreInterfaces.dll</HintPath>

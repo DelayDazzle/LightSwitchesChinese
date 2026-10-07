@@ -12,7 +12,6 @@ namespace LightSwitchesChinese
         internal static IMonitor ModMonitor;
         private Harmony harmony;
 
-        // 直接config中的英文名称
         internal static readonly Dictionary<string, string> NameDict = new()
         {
             ["Mod Enabled"] = "启用模组",
@@ -39,7 +38,6 @@ namespace LightSwitchesChinese
         {
             Instance = this;
             ModMonitor = Monitor;
-
             harmony = new Harmony(ModManifest.UniqueID);
 
             try
@@ -47,23 +45,43 @@ namespace LightSwitchesChinese
                 var gmcmType = AccessTools.TypeByName("GenericModConfigMenu.Framework.ModConfigMenu") 
                                ?? AccessTools.TypeByName("GenericModConfigMenu.ModConfigMenu");
 
-                if (gmcmType != null)
-                {
-                    var methods = new[] { "AddBoolOption", "AddNumberOption", "AddTextOption", "AddColorOption" };
-                    foreach (var name in methods)
-                    {
-                        var method = AccessTools.Method(gmcmType, name);
-                        if (method != null)
-                        {
-                            harmony.Patch(method, prefix: new HarmonyMethod(typeof(ModEntry), nameof(Prefix)));
-                        }
-                    }
-                    ModMonitor.Log("GMCM 补丁加载成功。", LogLevel.Info);
-                }
-                else
+                if (gmcmType == null)
                 {
                     ModMonitor.Log("找不到 GenericModConfigMenu 的目标类，汉化补丁无法生效。请确认 GMCM 已安装。", LogLevel.Warn);
+                    return;
                 }
+
+                var methods = new[] { "AddBoolOption", "AddNumberOption", "AddTextOption", "AddColorOption" };
+                foreach (var methodName in methods)
+                {
+                    var method = AccessTools.Method(gmcmType, methodName);
+                    if (method == null) continue;
+
+                    // 判断参数类型，使用对应的 Prefix 打补丁
+                    var parameters = method.GetParameters();
+                    bool hasFuncName = false;
+                    bool hasStringName = false;
+
+                    foreach (var p in parameters)
+                    {
+                        if (p.Name == "name")
+                        {
+                            if (p.ParameterType == typeof(Func<string>)) hasFuncName = true;
+                            else if (p.ParameterType == typeof(string)) hasStringName = true;
+                        }
+                    }
+
+                    if (hasFuncName)
+                    {
+                        harmony.Patch(method, prefix: new HarmonyMethod(typeof(ModEntry), nameof(Prefix_Func)));
+                    }
+                    else if (hasStringName)
+                    {
+                        harmony.Patch(method, prefix: new HarmonyMethod(typeof(ModEntry), nameof(Prefix_String)));
+                    }
+                }
+
+                ModMonitor.Log("GMCM 补丁加载成功。", LogLevel.Info);
             }
             catch (Exception ex)
             {
@@ -71,41 +89,44 @@ namespace LightSwitchesChinese
             }
         }
 
-        public static void Prefix(object[] __args)
+        // 处理 Func<string> 类型的 name 和 tooltip（使用 ref 引用原参数）
+        public static void Prefix_Func(IManifest mod, ref Func<string> name, ref Func<string> tooltip)
         {
-            // 参数检查
-            if (__args.Length < 4 || __args[0] is not IManifest manifest) return;
-            if (manifest.UniqueID != "aedenthorn.LightSwitches") return;
+            if (mod.UniqueID != "aedenthorn.LightSwitches") return;
 
-            // 检查 name 参数 (索引 3，类型是 Func<string>)
-            if (__args[3] is Func<string> nameFunc)
+            if (name != null)
             {
                 try
                 {
-                    string originalName = nameFunc();
+                    string originalName = name();
                     if (NameDict.TryGetValue(originalName, out var cnName))
-                    {
-                        // 替换 name 的委托
-                        __args[3] = (Func<string>)(() => cnName);
-                    }
+                        name = () => cnName;
                 }
-                catch { /* 忽略 */ }
+                catch { }
             }
 
-            // 检查 tooltip 参数 (索引 4，类型是 Func<string>)
-            if (__args.Length > 4 && __args[4] is Func<string> tooltipFunc)
+            if (tooltip != null)
             {
                 try
                 {
-                    string originalTooltip = tooltipFunc();
+                    string originalTooltip = tooltip();
                     if (TooltipDict.TryGetValue(originalTooltip, out var cnTooltip))
-                    {
-                        // 替换 tooltip 的委托
-                        __args[4] = (Func<string>)(() => cnTooltip);
-                    }
+                        tooltip = () => cnTooltip;
                 }
-                catch { /* 忽略 */ }
+                catch { }
             }
+        }
+
+        // 处理 string 类型的 name 和 tooltip（使用 ref 引用原参数）
+        public static void Prefix_String(IManifest mod, ref string name, ref string tooltip)
+        {
+            if (mod.UniqueID != "aedenthorn.LightSwitches") return;
+
+            if (name != null && NameDict.TryGetValue(name, out var cnName))
+                name = cnName;
+
+            if (tooltip != null && TooltipDict.TryGetValue(tooltip, out var cnTooltip))
+                tooltip = cnTooltip;
         }
     }
 }

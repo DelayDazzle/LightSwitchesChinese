@@ -1,20 +1,10 @@
 {
-  "Name": "LightSwitches Chinese",
+  "Name": "LightSwitches Chinese Localization",
   "Author": "DelayDazzle",
   "Version": "1.0.0",
-  "Description": "LightSwitches 的配置菜单汉化补丁。",
+  "Description": "LightSwitches 的独立汉化补丁。",
   "UniqueID": "DelayDazzle.LightSwitchesChinese",
   "EntryDll": "LightSwitchesChinese.dll",
   "MinimumApiVersion": "4.0.0",
-  "UpdateKeys": [],
-  "Dependencies": [
-    {
-      "UniqueID": "aedenthorn.LightSwitches",
-      "IsRequired": true
-    },
-    {
-      "UniqueID": "spacechase0.GenericModConfigMenu",
-      "IsRequired": true
-    }
-  ]
+  "UpdateKeys": []
 }

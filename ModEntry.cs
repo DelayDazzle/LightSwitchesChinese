@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
@@ -14,41 +16,39 @@ namespace LightSwitchesChinese
         {
             ModMonitor = Monitor;
             var harmony = new Harmony(ModManifest.UniqueID);
-            harmony.PatchAll();
 
-            var targetType = AccessTools.TypeByName("LightSwitches.ModEntry");
-            if (targetType == null)
+            // 找到 LightSwitches 程序集
+            var assembly = AppDomain.CurrentDomain.GetAssemblies()
+                .FirstOrDefault(a => a.GetName().Name == "LightSwitches");
+
+            if (assembly == null)
             {
-                ModMonitor.Log("找不到目标类 LightSwitches.ModEntry，汉化补丁无法生效。", LogLevel.Error);
+                ModMonitor.Log("找不到 LightSwitches 程序集，汉化补丁无法生效。", LogLevel.Error);
+                return;
             }
-            else
+
+            int patchedCount = 0;
+            foreach (var type in assembly.GetTypes())
             {
-                ModMonitor.Log("LightSwitches 汉化补丁已加载。", LogLevel.Info);
+                foreach (var method in type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly))
+                {
+                    try
+                    {
+                        if (method.GetMethodBody() == null) continue;
+                        // 跳过泛型方法，Harmony 不支持
+                        if (method.IsGenericMethod) continue;
+
+                        harmony.Patch(method, transpiler: new HarmonyMethod(typeof(ModEntry), nameof(Transpiler)));
+                        patchedCount++;
+                    }
+                    catch
+                    {
+                        // 某些方法可能无法修补，忽略
+                    }
+                }
             }
-        }
-    }
 
-    [HarmonyPatch]
-    public static class LightSwitchesPatcher
-    {
-        public static IEnumerable<MethodBase> TargetMethods()
-        {
-            var type = AccessTools.TypeByName("LightSwitches.ModEntry");
-            if (type == null) yield break;
-
-            // 尝试补丁所有可能注册 GMCM 的方法
-            var methodNames = new[]
-            {
-                "GameLoop_GameLaunched",
-                "RegisterControlsGenericModConfigMenu",
-                "RegisterControls"
-            };
-
-            foreach (var name in methodNames)
-            {
-                var m = AccessTools.Method(type, name);
-                if (m != null) yield return m;
-            }
+            ModMonitor.Log($"LightSwitches 汉化补丁已加载，共修补 {patchedCount} 个方法。", LogLevel.Info);
         }
 
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
@@ -65,7 +65,7 @@ namespace LightSwitchesChinese
                 ["Color Button"] = "按钮颜色",
                 ["Options"] = "选项",
 
-                // 工具提示描述
+                // 工具提示
                 ["Enables or disables the mod"] = "启用或禁用此模组。",
                 ["Enable debug logging"] = "启用调试日志输出。",
                 ["Only allow light switches indoors"] = "仅在室内允许使用电灯开关。",

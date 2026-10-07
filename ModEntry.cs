@@ -16,7 +16,7 @@ namespace LightSwitchesChinese
         public override void Entry(IModHelper helper)
         {
             Instance = this;
-            Monitor = Monitor;
+            ModMonitor = Monitor;
 
             harmony = new Harmony(ModManifest.UniqueID);
             harmony.PatchAll();

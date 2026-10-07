@@ -6,10 +6,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '8.0.x'
 
@@ -18,12 +18,13 @@ jobs:
 
     - name: Prepare mod folder
       run: |
-        mkdir -p LightSwitchesChinese
+        mkdir -p LightSwitchesChinese/i18n
         cp manifest.json LightSwitchesChinese/
         cp bin/Release/net8.0/LightSwitchesChinese.dll LightSwitchesChinese/
+        cp i18n/zh.json LightSwitchesChinese/i18n/
 
     - name: Upload artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: LightSwitchesChinese
         path: LightSwitchesChinese
